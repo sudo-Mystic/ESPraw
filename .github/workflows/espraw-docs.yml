@@ -87,7 +87,6 @@ jobs:
   generate-api-docs:
     name: Generate API Documentation
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     
     steps:
     - name: Checkout repository
