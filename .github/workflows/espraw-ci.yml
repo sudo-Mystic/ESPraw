@@ -1,0 +1,131 @@
+name: ESPraw CI
+
+on:
+  push:
+    branches: [ main, develop, 'copilot/**' ]
+  pull_request:
+    branches: [ main, develop ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build for ${{ matrix.board }}
+    runs-on: ubuntu-latest
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        board:
+          - esp32dev
+          - esp32-s2-saola-1
+          - esp32-c3-devkitm-1
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Cache PlatformIO
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.platformio
+          .pio
+        key: ${{ runner.os }}-pio-${{ matrix.board }}-${{ hashFiles('**/platformio.ini') }}
+        restore-keys: |
+          ${{ runner.os }}-pio-${{ matrix.board }}-
+          ${{ runner.os }}-pio-
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install PlatformIO
+      run: |
+        python -m pip install --upgrade pip
+        pip install platformio
+    
+    - name: Build examples
+      run: |
+        # Build BasicAuth example
+        pio ci --lib="." --project-option="lib_deps=bblanchon/ArduinoJson@^6.21.0" --board=${{ matrix.board }} examples/BasicAuth/BasicAuth.ino
+        
+        # Build FetchHotPosts example
+        pio ci --lib="." --project-option="lib_deps=bblanchon/ArduinoJson@^6.21.0" --board=${{ matrix.board }} examples/FetchHotPosts/FetchHotPosts.ino
+        
+        # Build SubmitPost example
+        pio ci --lib="." --project-option="lib_deps=bblanchon/ArduinoJson@^6.21.0" --board=${{ matrix.board }} examples/SubmitPost/SubmitPost.ino
+        
+        # Build ReplyToComment example
+        pio ci --lib="." --project-option="lib_deps=bblanchon/ArduinoJson@^6.21.0" --board=${{ matrix.board }} examples/ReplyToComment/ReplyToComment.ino
+      env:
+        PLATFORMIO_BUILD_FLAGS: -DCORE_DEBUG_LEVEL=0
+
+  lint:
+    name: Code Style Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install cpplint
+      run: pip install cpplint
+    
+    - name: Run cpplint
+      run: |
+        cpplint --recursive --filter=-legal/copyright,-build/include_subdir,-readability/todo src/ || true
+      continue-on-error: true
+
+  check-library:
+    name: Arduino Library Format Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Arduino Library Format Check
+      uses: arduino/arduino-lint-action@v1
+      with:
+        library-manager: submit
+        compliance: specification
+        project-type: library
+
+  size-report:
+    name: Generate Size Report
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install PlatformIO
+      run: |
+        python -m pip install --upgrade pip
+        pip install platformio
+    
+    - name: Build and generate size report
+      run: |
+        # Build BasicAuth example and capture size
+        pio ci --lib="." --project-option="lib_deps=bblanchon/ArduinoJson@^6.21.0" --board=esp32dev examples/BasicAuth/BasicAuth.ino > build_output.txt 2>&1 || true
+        
+        echo "## Build Size Report" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### ESP32 Dev Board" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+        grep -A 5 "RAM:" build_output.txt | head -n 10 >> $GITHUB_STEP_SUMMARY || echo "Size info not available" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

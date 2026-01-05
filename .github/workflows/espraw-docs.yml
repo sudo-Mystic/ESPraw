@@ -1,0 +1,130 @@
+name: Documentation
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'examples/**'
+      - 'README.md'
+      - 'PROJECT_PLAN.md'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'examples/**'
+      - 'README.md'
+      - 'PROJECT_PLAN.md'
+
+permissions:
+  contents: read
+
+jobs:
+  check-documentation:
+    name: Check Documentation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Check README exists
+      run: |
+        if [ ! -f README.md ]; then
+          echo "::error::README.md not found"
+          exit 1
+        fi
+        echo "::notice::README.md found"
+    
+    - name: Check examples have comments
+      run: |
+        for example in examples/*/*.ino; do
+          if [ -f "$example" ]; then
+            if ! head -n 5 "$example" | grep -q "//\|/\*"; then
+              echo "::warning::$example may be missing header comments"
+            else
+              echo "::notice::$example has header comments"
+            fi
+          fi
+        done
+    
+    - name: Check header files have documentation
+      run: |
+        for header in src/*.h src/models/*.h; do
+          if [ -f "$header" ]; then
+            if ! head -n 10 "$header" | grep -q "/\*\*"; then
+              echo "::warning::$header may be missing doxygen comments"
+            else
+              echo "::notice::$header has doxygen comments"
+            fi
+          fi
+        done
+    
+    - name: Validate library.properties
+      run: |
+        if [ ! -f library.properties ]; then
+          echo "::error::library.properties not found"
+          exit 1
+        fi
+        
+        # Check required fields
+        for field in name version author maintainer sentence paragraph category url architectures; do
+          if ! grep -q "^$field=" library.properties; then
+            echo "::error::Missing required field: $field"
+            exit 1
+          fi
+        done
+        
+        echo "::notice::library.properties is valid"
+    
+    - name: Check for broken links in README
+      uses: gaurav-nelson/github-action-markdown-link-check@v1
+      with:
+        use-quiet-mode: 'yes'
+        config-file: '.github/workflows/markdown-link-check-config.json'
+      continue-on-error: true
+
+  generate-api-docs:
+    name: Generate API Documentation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Install Doxygen
+      run: sudo apt-get update && sudo apt-get install -y doxygen graphviz
+    
+    - name: Create Doxyfile
+      run: |
+        cat > Doxyfile << 'EOF'
+        PROJECT_NAME           = "ESPraw"
+        PROJECT_NUMBER         = "0.1.0"
+        PROJECT_BRIEF          = "ESP32 Reddit API Wrapper"
+        OUTPUT_DIRECTORY       = docs
+        INPUT                  = src README.md
+        RECURSIVE              = YES
+        EXTRACT_ALL            = YES
+        EXTRACT_PRIVATE        = NO
+        EXTRACT_STATIC         = YES
+        GENERATE_HTML          = YES
+        GENERATE_LATEX         = NO
+        HTML_OUTPUT            = html
+        USE_MDFILE_AS_MAINPAGE = README.md
+        JAVADOC_AUTOBRIEF      = YES
+        OPTIMIZE_OUTPUT_FOR_C  = YES
+        BUILTIN_STL_SUPPORT    = YES
+        EOF
+    
+    - name: Generate documentation
+      run: doxygen Doxyfile || echo "::warning::Doxygen generation had warnings"
+      continue-on-error: true
+    
+    - name: Check documentation was generated
+      run: |
+        if [ -d docs/html ]; then
+          echo "::notice::Documentation generated successfully in docs/html"
+          ls -la docs/html | head -n 20
+        else
+          echo "::warning::Documentation directory not found"
+        fi
