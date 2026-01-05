@@ -26,12 +26,10 @@
 #include "ESPrawConfig.h"
 #include "ESPrawClient.h"
 #include "ESPrawAuth.h"
-
-// Forward declarations
-class Subreddit;
-class Submission;
-class Comment;
-class Redditor;
+#include "models/Subreddit.h"
+#include "models/Submission.h"
+#include "models/Comment.h"
+#include "models/Redditor.h"
 
 /**
  * ESPraw - Main Reddit API wrapper class
