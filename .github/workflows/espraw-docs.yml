@@ -6,14 +6,14 @@ on:
     paths:
       - 'src/**'
       - 'examples/**'
-      - 'README_ESPRAW.md'
+      - 'README.md'
       - 'PROJECT_PLAN.md'
   pull_request:
     branches: [ main ]
     paths:
       - 'src/**'
       - 'examples/**'
-      - 'README_ESPRAW.md'
+      - 'README.md'
       - 'PROJECT_PLAN.md'
 
 permissions:
@@ -30,11 +30,11 @@ jobs:
     
     - name: Check README exists
       run: |
-        if [ ! -f README_ESPRAW.md ]; then
-          echo "::error::README_ESPRAW.md not found"
+        if [ ! -f README.md ]; then
+          echo "::error::README.md not found"
           exit 1
         fi
-        echo "::notice::README_ESPRAW.md found"
+        echo "::notice::README.md found"
     
     - name: Check examples have comments
       run: |
@@ -103,7 +103,7 @@ jobs:
         PROJECT_NUMBER         = "0.1.0"
         PROJECT_BRIEF          = "ESP32 Reddit API Wrapper"
         OUTPUT_DIRECTORY       = docs
-        INPUT                  = src README_ESPRAW.md
+        INPUT                  = src README.md
         RECURSIVE              = YES
         EXTRACT_ALL            = YES
         EXTRACT_PRIVATE        = NO
@@ -111,7 +111,7 @@ jobs:
         GENERATE_HTML          = YES
         GENERATE_LATEX         = NO
         HTML_OUTPUT            = html
-        USE_MDFILE_AS_MAINPAGE = README_ESPRAW.md
+        USE_MDFILE_AS_MAINPAGE = README.md
         JAVADOC_AUTOBRIEF      = YES
         OPTIMIZE_OUTPUT_FOR_C  = YES
         BUILTIN_STL_SUPPORT    = YES

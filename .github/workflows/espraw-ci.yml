@@ -19,8 +19,8 @@ jobs:
       matrix:
         board:
           - esp32dev
-          - esp32-s2
-          - esp32-c3
+          - esp32-s2-saola-1
+          - esp32-c3-devkitm-1
     
     steps:
     - name: Checkout repository
@@ -95,7 +95,7 @@ jobs:
     - name: Arduino Library Format Check
       uses: arduino/arduino-lint-action@v1
       with:
-        library-manager: update
+        library-manager: submit
         compliance: specification
         project-type: library
 
