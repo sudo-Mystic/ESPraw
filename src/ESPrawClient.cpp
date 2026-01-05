@@ -15,8 +15,14 @@ ESPrawClient::~ESPrawClient() {
 
 bool ESPrawClient::begin(const ESPrawRequestConfig& config) {
     _config = config;
-    _secureClient.setInsecure(); // For now, skip certificate validation
-    // TODO: Add proper certificate validation
+    // SECURITY WARNING: Certificate validation is currently disabled
+    // This is a known security issue and should be addressed before production use
+    // TODO: Implement proper certificate validation
+    // For production, consider:
+    // 1. Loading Reddit's root CA certificate
+    // 2. Using certificate fingerprint validation
+    // 3. Implementing certificate bundle validation
+    _secureClient.setInsecure();
     return true;
 }
 
@@ -99,7 +105,10 @@ ESPrawResponse ESPrawClient::performRequest(ESPrawRequestMethod method,
     for (int attempt = 0; attempt <= _config.maxRetries; attempt++) {
         if (attempt > 0) {
             Serial.printf("Retry attempt %d/%d\n", attempt, _config.maxRetries);
-            delay(_config.retryDelay * attempt); // Exponential backoff
+            // Exponential backoff: delay increases exponentially with each retry
+            unsigned long backoffDelay = _config.retryDelay * (1 << attempt); // 2^attempt
+            if (backoffDelay > 30000) backoffDelay = 30000; // Cap at 30 seconds
+            delay(backoffDelay);
         }
         
         HTTPClient http;

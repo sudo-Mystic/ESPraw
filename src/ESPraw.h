@@ -3,6 +3,19 @@
  * 
  * This is the main entry point for the ESPraw library.
  * Provides convenient access to Reddit's API from ESP32.
+ * 
+ * MEMORY MANAGEMENT NOTE:
+ * This library uses manual memory management for returned objects.
+ * All methods that return pointers (Subreddit*, Submission*, etc.) 
+ * transfer ownership to the caller. You MUST delete these objects 
+ * when done to avoid memory leaks.
+ * 
+ * Example:
+ *   Subreddit* sub = reddit.subreddit("test");
+ *   // Use sub...
+ *   delete sub; // Don't forget to free memory!
+ * 
+ * Future versions may use smart pointers to avoid this requirement.
  */
 
 #ifndef ESPRAW_H

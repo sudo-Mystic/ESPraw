@@ -117,8 +117,14 @@ Submission* ESPraw::submissionByUrl(const String& url) {
 }
 
 Comment* ESPraw::comment(const String& id) {
+    // NOTE: This method creates a minimal Comment object with only the ID.
+    // To fetch full comment data, you need to:
+    // 1. Get the submission containing the comment
+    // 2. Parse the comment from the submission's comment tree
+    // OR implement a dedicated comment fetch endpoint
+    
     // For now, return a basic comment object
-    // Full implementation would fetch from Reddit
+    // The caller should use submission.getComments() to get full comment data
     DynamicJsonDocument doc(1024);
     JsonObject obj = doc.to<JsonObject>();
     obj["id"] = id;

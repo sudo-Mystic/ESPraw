@@ -13,7 +13,14 @@ ESPrawAuth::~ESPrawAuth() {
 
 bool ESPrawAuth::begin(const ESPrawAuthConfig& config) {
     _config = config;
-    _secureClient.setInsecure(); // For now, skip certificate validation
+    // SECURITY WARNING: Certificate validation is currently disabled
+    // This is a known security issue and should be addressed before production use
+    // TODO: Implement proper certificate validation
+    // For production, consider:
+    // 1. Loading Reddit's root CA certificate
+    // 2. Using certificate fingerprint validation
+    // 3. Implementing certificate bundle validation
+    _secureClient.setInsecure(); 
     return true;
 }
 
