@@ -1,8 +1,13 @@
 # ESPraw: ESP32 Reddit API Wrapper
 
+[![CI Status](https://github.com/sudo-Mystic/ESPraw/workflows/ESPraw%20CI/badge.svg)](https://github.com/sudo-Mystic/ESPraw/actions/workflows/espraw-ci.yml)
+[![Tests](https://github.com/sudo-Mystic/ESPraw/workflows/ESPraw%20Tests/badge.svg)](https://github.com/sudo-Mystic/ESPraw/actions/workflows/espraw-tests.yml)
+[![Documentation](https://github.com/sudo-Mystic/ESPraw/workflows/Documentation/badge.svg)](https://github.com/sudo-Mystic/ESPraw/actions/workflows/espraw-docs.yml)
 [![Arduino Library](https://img.shields.io/badge/Arduino-Library-blue.svg)](https://www.arduino.cc/reference/en/libraries/)
 [![ESP32](https://img.shields.io/badge/ESP32-Compatible-green.svg)](https://www.espressif.com/en/products/socs/esp32)
 [![License](https://img.shields.io/badge/License-BSD%202--Clause-orange.svg)](LICENSE.txt)
+[![Version](https://img.shields.io/badge/Version-0.1.0-blue.svg)](https://github.com/sudo-Mystic/ESPraw/releases)
+[![PlatformIO](https://badges.registry.platformio.org/packages/espraw/library/ESPraw.svg)](https://registry.platformio.org/libraries/espraw/ESPraw)
 
 ESPraw is a comprehensive Reddit API wrapper for ESP32 microcontrollers, modeled after the popular [PRAW (Python Reddit API Wrapper)](https://github.com/praw-dev/praw). This library enables ESP32 devices to interact with Reddit's API, allowing IoT projects to read posts, submit content, reply to comments, and more.
 

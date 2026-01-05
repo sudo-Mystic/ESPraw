@@ -9,3 +9,47 @@
 _build/
 build/
 dist/
+
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+*.pio
+platformio.ini.bak
+
+# Arduino
+*.hex
+*.elf
+*.bin
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.o
+*.a
+*.so
+*.dll
+*.exe
+
+# Docs
+docs/html/
+docs/latex/
+Doxyfile.bak
+
+# Test artifacts
+test/output/
+*.log
+
+# Credentials (never commit these!)
+*credentials*.h
+*secrets*.h
+config_local.h

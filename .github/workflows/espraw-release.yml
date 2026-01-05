@@ -1,0 +1,130 @@
+name: ESPraw Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 0.1.0)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set version
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+        else
+          echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Update version in library.properties
+      run: |
+        VERSION="${{ steps.version.outputs.VERSION }}"
+        sed -i "s/^version=.*/version=$VERSION/" library.properties
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+        git add library.properties
+        git commit -m "Update version to $VERSION" || true
+    
+    - name: Create release archive
+      run: |
+        VERSION="${{ steps.version.outputs.VERSION }}"
+        ARCHIVE_NAME="ESPraw-v${VERSION}.zip"
+        
+        # Create a clean copy without git files
+        mkdir -p /tmp/ESPraw
+        cp -r src examples library.properties README_ESPRAW.md LICENSE.txt /tmp/ESPraw/
+        
+        # Create zip archive
+        cd /tmp
+        zip -r "$ARCHIVE_NAME" ESPraw/
+        mv "$ARCHIVE_NAME" "$GITHUB_WORKSPACE/"
+        
+        echo "ARCHIVE_NAME=$ARCHIVE_NAME" >> $GITHUB_ENV
+    
+    - name: Generate changelog
+      id: changelog
+      run: |
+        VERSION="${{ steps.version.outputs.VERSION }}"
+        
+        # Get the previous tag
+        PREV_TAG=$(git tag --sort=-v:refname | grep -A1 "v$VERSION" | tail -n1)
+        
+        if [ -z "$PREV_TAG" ] || [ "$PREV_TAG" = "v$VERSION" ]; then
+          PREV_TAG=$(git rev-list --max-parents=0 HEAD)
+        fi
+        
+        # Generate changelog
+        echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+        echo "## Changes" >> $GITHUB_OUTPUT
+        git log $PREV_TAG..HEAD --oneline --no-merges >> $GITHUB_OUTPUT || echo "Initial release" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+    
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ steps.version.outputs.VERSION }}
+        name: ESPraw v${{ steps.version.outputs.VERSION }}
+        body: |
+          # ESPraw v${{ steps.version.outputs.VERSION }}
+          
+          ESP32 Reddit API Wrapper - modeled after PRAW
+          
+          ## Installation
+          
+          ### Arduino IDE
+          1. Download the `ESPraw-v${{ steps.version.outputs.VERSION }}.zip` file below
+          2. In Arduino IDE, go to Sketch → Include Library → Add .ZIP Library
+          3. Select the downloaded ZIP file
+          
+          ### PlatformIO
+          ```ini
+          lib_deps =
+              ESPraw@^${{ steps.version.outputs.VERSION }}
+              bblanchon/ArduinoJson@^6.21.0
+          ```
+          
+          ${{ steps.changelog.outputs.CHANGELOG }}
+          
+          ## Documentation
+          
+          - [Quick Start Guide](https://github.com/sudo-Mystic/ESPraw/blob/main/README_ESPRAW.md)
+          - [API Reference](https://github.com/sudo-Mystic/ESPraw/blob/main/PROJECT_PLAN.md)
+          - [Examples](https://github.com/sudo-Mystic/ESPraw/tree/main/examples)
+        files: |
+          ESPraw-v${{ steps.version.outputs.VERSION }}.zip
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  arduino-library-manager:
+    name: Submit to Arduino Library Manager
+    runs-on: ubuntu-latest
+    needs: create-release
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Notify about manual submission
+      run: |
+        echo "::notice::After this release is published, manually submit to Arduino Library Manager at https://github.com/arduino/library-registry"
+        echo "::notice::Use this repository URL: ${{ github.server_url }}/${{ github.repository }}"
